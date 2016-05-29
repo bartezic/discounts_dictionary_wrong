@@ -1,0 +1,50 @@
+All tasks a separated into own folders.
+In order to test ruby solutions by hand fire irb console and require main file, for example:
+irb -r ./lib/word_combinations/word_combinations
+
+All solutions are covered by rspec tests as well.
+
+----------------------------------------------------
+WORD COMBINATIONS
+The algorithm is recursive and its complexity for particular word with length N:
+  T(N) = O(N) + T(N - 1)
+which at the worst case gives us complexity:
+  O(N^2)
+Not the fastest - but it depends on length of the word and not affected by dictionary size.
+Also it's thread safe and searching prefixes for multiple words can be done in parallel after dictionary processing.
+
+
+----------------------------------------------------
+DISCOUNTS
+Few words about classes responsibility:
+
+Matching classes - responsible for detection of items witch match particular discount.
+  Only basic classes required to implement example case.
+  Could be extended with additional matchers to create complex rules.
+  For example choices, joins, price based matchers, etc
+
+Pricing classes - responsible for defining discounts.
+
+Rules - responsible for applying discounts on matched items
+  Discounts::Rules::ItemsPack - matches every pack of items and applies discounts to every full pack. Incomplete packs ignored
+  Discounts::Rules::AllMatched - after matchers respond with success applies discount to all items witch pass criteria of matcher.
+
+Discounts::Product - simple product container
+Discounts::DiscountedProduct - decorates product and stores all applied discounts
+Discounts::ProductCatalog - constructs predefined items described in task
+
+rules, discounts and pricing are stateless objects and can be reused for multiple checkouts.
+checkout is stateful - and should be recreated for every total operation
+
+How to define discount for Fruit Tea
+matcher = Discounts::Matching::DoubleItem.new('FR') #matches double tea item
+pricing = Discounts::Pricing::DiscountsSequence.new(0, 100) #applies 0% discount to first item and 100% discount to second
+tea_rule = Discounts::Rules::ItemsPack.new(matcher, pricing) - matches items by full packs and applies discount
+
+How to define discount for Strawberries
+matcher = Discounts::Matching::SeveralItems.new('SR', 3) #matches 3 or more strawberry items
+pricing = Discounts::Pricing::Amount.new(0.5) #fixed discount in 0.5$ amount per item
+strawberries_rule = Discounts::Rules::AllMatched.new(matcher, pricing)
+
+checkout = Discounts::Checkout.new(tea_rule, strawberries_rule)
+
